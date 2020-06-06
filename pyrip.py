@@ -13,7 +13,9 @@ log = logging.getLogger()
 
 funcdict = {
     "generic" : importers.import_generic.importer,
-    "imgur.com" : importers.import_imgur.importer
+    "imgur.com" : importers.import_imgur.importer,
+    "iesdouyin.com" : importers.import_douyin.importer,
+    "douyin.com" : importers.import_douyin.importer
 }
 
 x = threading.Thread(target=process_queue, args=())

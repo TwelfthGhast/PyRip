@@ -1,7 +1,6 @@
 import logging
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from concurrent import futures
 from webdriveropts import CHROME_OPTIONS
 from tld import get_tld
 
@@ -38,9 +37,9 @@ def album_parser(url):
             })
             for image in post_images:
                 image_urls.add(image['src'][2:])
-        from dl import requests_img, wrapper
+        from dl import requests_stream, wrapper
         for i in image_urls:
-            wrapper(requests_img, {
+            wrapper(requests_stream, {
                 "url" : i,
                 "folder" : url.split(get_tld(url, as_object=True).fld)[-1][1:].replace("/","."),
                 "fname" : i.split("/")[-1]

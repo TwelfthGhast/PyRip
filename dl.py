@@ -50,7 +50,7 @@ def wrapper(func, *args, **kwargs):
     if not url.startswith("http"):
         url = f"http://{url}"
     fld = get_tld(url, as_object=True).fld
-    if fld in last_dl:
+    if fld in last_dl and "nodelay" not in kwargs:
         # 10 second default delay
         dl_delay = 10
         if fld in delay:
@@ -78,11 +78,12 @@ def file_md5(fname):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
-def requests_img(data: dict):
+def requests_stream(data: dict):
     if not data["url"].startswith("http"):
         data["url"] = f"http://{data['url']}"
     log.debug(f"{data['url']} requested.")
-    r = requests.get(data["url"], stream=True)
+    headers = {'user-agent' : 'Wget/1.19.4 (linux-gnu)'}
+    r = requests.get(data["url"], stream=True, headers=headers)
     if not os.path.isdir("downloads"):
         os.mkdir("downloads")
     group = ""
@@ -101,7 +102,8 @@ def requests_img(data: dict):
     else:
         temp = get_tld(data["url"], as_object=True).fld
         folder = data["url"].split(temp)[-1][1:].replace("/",".")
-    folder_path = os.path.join(folder_path, folder)
+    if folder is not None:
+        folder_path = os.path.join(folder_path, folder)
     if not os.path.isdir(folder_path):
         os.mkdir(folder_path)
     file_path = os.path.join(folder_path, data["fname"])
@@ -121,3 +123,4 @@ def requests_img(data: dict):
             shutil.copyfileobj(r.raw, f)   
     else:
         log.warning(f"{data['url']} returned status code {r.status_code}")
+
