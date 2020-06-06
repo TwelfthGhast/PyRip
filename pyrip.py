@@ -5,8 +5,9 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("selenium").setLevel(logging.WARNING)
 import importers
-import re
+import threading
 from tld import get_tld
+from dl import process_queue
 
 log = logging.getLogger()
 
@@ -15,6 +16,8 @@ funcdict = {
     "imgur.com" : importers.import_imgur.importer
 }
 
+x = threading.Thread(target=process_queue, args=())
+x.start()
 while True:
     url = input("Please enter a url to crawl:")
     try:

@@ -2,7 +2,8 @@ import logging
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from concurrent import futures
-from extensions import CHROME_OPTIONS
+from webdriveropts import CHROME_OPTIONS
+from tld import get_tld
 
 log = logging.getLogger(__name__)
 
@@ -30,26 +31,17 @@ def album_parser(url):
         while iternum * scroll_length < page_height:
             driver.execute_script(f"window.scrollTo({iternum * scroll_length}, {(iternum + 1) * scroll_length})")
             iternum += 1
-            # get initial loaded images
+            # get loaded images
             soup = BeautifulSoup(driver.page_source, "lxml")
             post_images = soup.find_all("img", attrs={
                 "class" : "post-image-placeholder"
             })
             for image in post_images:
                 image_urls.add(image['src'][2:])
-        from dl import requests_img
-        with futures.ThreadPoolExecutor(max_workers=4) as executor:
-            jobs = []
-            num_jobs = 0
-            success = 0
-            fail = 0
-            for i in image_urls:
-                jobs.append(executor.submit(requests_img, i))
-                num_jobs += 1
-            for job in futures.as_completed(jobs):
-                if job.result() == 200:
-                    success += 1
-                else:
-                    fail += 1
-                print(f"{num_jobs} jobs: {success} successfully completed, {fail} failed.")
-            log.debug("ThreadPoolExecutor futures completed")
+        from dl import requests_img, wrapper
+        for i in image_urls:
+            wrapper(requests_img, {
+                "url" : i,
+                "folder" : url.split(get_tld(url, as_object=True).fld)[-1][1:].replace("/","."),
+                "fname" : i.split("/")[-1]
+            })
