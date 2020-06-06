@@ -1,16 +1,19 @@
 import logging
 import sys
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("selenium").setLevel(logging.WARNING)
 import importers
 import re
 from tld import get_tld
+
+log = logging.getLogger()
 
 funcdict = {
     "generic" : importers.import_generic.importer,
     "imgur.com" : importers.import_imgur.importer
 }
-
-log = logging.getLogger()
 
 while True:
     url = input("Please enter a url to crawl:")
