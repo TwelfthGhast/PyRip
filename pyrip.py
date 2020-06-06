@@ -8,6 +8,7 @@ import importers
 import threading
 from tld import get_tld
 from dl import process_queue
+from webdriveropts import VERSION_CHROME, VERSION_CHROMEDRIVER, VERSION_CHROMEDRIVER_SHORT, VERSION_CHROME_SHORT
 
 log = logging.getLogger()
 
@@ -18,6 +19,11 @@ funcdict = {
     "douyin.com" : importers.import_douyin.importer
 }
 
+log.info(f"ChromeDriver version '{VERSION_CHROMEDRIVER}' detected.")
+log.info(f"Chrome version '{VERSION_CHROME}' detected.")
+if int(VERSION_CHROME_SHORT) > 61:
+    log.warning("Selenium can be detected by some websites due to services such as distil. It is recommended to use Chrome version 61 or lower, with the corresponding ChromeDriver to match.")
+    log.warning("https://stackoverflow.com/questions/42169488/how-to-make-chromedriver-undetectable")
 x = threading.Thread(target=process_queue, args=())
 x.start()
 while True:

@@ -34,6 +34,9 @@ def parse_user(url):
     with webdriver.Chrome() as driver:
         driver.implicitly_wait(10)
         driver.get(url)
+        user_id_text = ""
+        '''
+        # MUSIC VIDEOS ARE CURRENTLY DOWN
         # believe DOM loads all music-items at once, otherwise sleep may be needed
         # https://www.douyin.com/share/user/83404616899
         # 音乐
@@ -60,17 +63,47 @@ def parse_user(url):
                 parse_video(f"https://www.iesdouyin.com/share/video/{vid}/?mid=a", folder=user_id)
         except (NoSuchElementException, TimeoutException):
             logging.warning("Could not find 'music-item' class in body")
+        '''
+        vid_ids = set()
         # https://www.douyin.com/share/user/111424174425
         # 作品
-        # API call is failing for item goWork!
+        # API call is failing for item goWork due to detection of both chromedriver and geckodriver
         try:
             user_tab = driver.find_element_by_class_name("user-tab")
             user_tab.click()
-            WebDriverWait(driver, 500).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "item goWork"))
-            )
-        except (NoSuchElementException, TimeoutException):
-            logging.warning("Could not find 'item goWork' class in body")
+            sleep(5)
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            user_id_text = soup.find_all("p", attrs={
+                "class" : "shortid"
+            })[0].text
+            user_id_text = user_id_text.split()[-1]
+            user_id = re.findall(r'\d+', url)[0]
+            vid_li = soup.find_all("li", attrs={
+                "data-type" : "video"
+            })
+            for vid in vid_li:
+                vid_ids.add(vid["data-id"])
+            # scroll to load all video ids
+            SCROLL_PAUSE_TIME = 0.05
+            iternum = 0
+            page_height = driver.execute_script("return document.body.scrollHeight")
+            scroll_length = 4
+            while iternum * scroll_length < page_height:
+                driver.execute_script(f"window.scrollTo({iternum * scroll_length}, {(iternum + 1) * scroll_length})")
+                iternum += 1
+                page_height = driver.execute_script("return document.body.scrollHeight")
+                sleep(SCROLL_PAUSE_TIME)
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            vid_li = soup.find_all("li", attrs={
+                "data-type" : "video"
+            })
+            for vid in vid_li:
+                vid_ids.add(vid["data-id"])
+        except (NoSuchElementException, TimeoutException) as e:
+            logging.warning(f"Could not find 'item goWork' class in body: {e}")
+        print(f"{len(vid_ids)} videos found!")
+        for vid in vid_ids:
+            parse_video(f"https://www.iesdouyin.com/share/video/{vid}/?mid=a", folder=f"{user_id_text}-{user_id}")
 
 def parse_video(url, folder=None, recurse=False):
     print(url)
