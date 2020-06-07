@@ -3,6 +3,7 @@ from selenium import webdriver
 
 CHROME_OPTIONS = ChromeOptions()
 CHROME_OPTIONS.add_argument("--headless")
+CHROME_OPTIONS.add_argument("--window-size=1600x900")
 
 driver = webdriver.Chrome(chrome_options=CHROME_OPTIONS)
 VERSION_CHROME = driver.capabilities['version']

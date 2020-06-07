@@ -31,7 +31,7 @@ def importer(url):
         pass
 
 def parse_user(url):
-    with webdriver.Chrome() as driver:
+    with webdriver.Chrome(chrome_options=CHROME_OPTIONS) as driver:
         driver.implicitly_wait(10)
         driver.get(url)
         user_id_text = ""
@@ -69,31 +69,26 @@ def parse_user(url):
         # 作品
         # API call is failing for item goWork due to detection of both chromedriver and geckodriver
         try:
-            user_tab = driver.find_element_by_class_name("user-tab")
-            user_tab.click()
-            sleep(5)
+            # scroll to load all video ids
+            SCROLL_PAUSE_TIME = 0.04
+            iternum = 0
+            page_height = driver.execute_script("return document.body.scrollHeight")
+            scroll_length = 8
+            while iternum * scroll_length < page_height:
+                if iternum == 10:
+                    user_tab = driver.find_element_by_class_name("user-tab")
+                    user_tab.click()
+                    sleep(2)
+                driver.execute_script(f"window.scrollTo({iternum * scroll_length}, {(iternum + 1) * scroll_length})")
+                iternum += 1
+                page_height = driver.execute_script("return document.body.scrollHeight")
+                sleep(SCROLL_PAUSE_TIME)
             soup = BeautifulSoup(driver.page_source, "lxml")
             user_id_text = soup.find_all("p", attrs={
                 "class" : "shortid"
             })[0].text
             user_id_text = user_id_text.split()[-1]
             user_id = re.findall(r'\d+', url)[0]
-            vid_li = soup.find_all("li", attrs={
-                "data-type" : "video"
-            })
-            for vid in vid_li:
-                vid_ids.add(vid["data-id"])
-            # scroll to load all video ids
-            SCROLL_PAUSE_TIME = 0.05
-            iternum = 0
-            page_height = driver.execute_script("return document.body.scrollHeight")
-            scroll_length = 4
-            while iternum * scroll_length < page_height:
-                driver.execute_script(f"window.scrollTo({iternum * scroll_length}, {(iternum + 1) * scroll_length})")
-                iternum += 1
-                page_height = driver.execute_script("return document.body.scrollHeight")
-                sleep(SCROLL_PAUSE_TIME)
-            soup = BeautifulSoup(driver.page_source, "lxml")
             vid_li = soup.find_all("li", attrs={
                 "data-type" : "video"
             })
